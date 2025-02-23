@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Student Management</title>
+    <script src="https://unpkg.com/htmx.org@1.9.5"></script>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- Responsive Navbar -->
+    <nav class="navbar">
+      <ul>
+        <li>
+          <a
+            href="#"
+            hx-get="http://localhost:8080/students/"
+            hx-target="#content"
+            class="active"
+            >Students</a
+          >
+        </li>
+        <li>
+          <a
+            href="#"
+            hx-get="http://localhost:8080/schools/"
+            hx-target="#content"
+            >Schools</a
+          >
+        </li>
+        <li>
+          <a id="addNewBtn" onclick="openAddModal()">Add new</a>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- Dynamic Content Area -->
+    <div
+      id="content"
+      class="content"
+      hx-get="http://localhost:8080/students/"
+      hx-trigger="load"
+    ></div>
+
+    <!-- Add Student/School Modal Form -->
+    <div id="addModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeAddModal()">&times;</span>
+        <h2 id="modalTitle">Add New</h2>
+
+        <!-- <form id="addForm" onsubmit="submitForm(event)"> -->
+        <form
+          id="addForm"
+          hx-target="#content"
+          hx-ext="submitjson"
+          hx-trigger="submit"
+        >
+          <input type="hidden" id="formType" name="formType" />
+
+          <div class="form-field">
+            <label for="name">Name:</label>
+            <input
+              class="form-input"
+              type="text"
+              id="name"
+              name="name"
+              required
+            />
+          </div>
+
+          <div class="form-field" id="schoolFields" style="display: none">
+            <label for="address">Address:</label>
+            <input class="form-input" type="text" id="address" name="address" />
+          </div>
+
+          <button type="submit">Submit</button>
+        </form>
+      </div>
+    </div>
+
+    <script src="./js/navbar.js"></script>
+    <script src="./js/modal.js"></script>
+    <script>
+      htmx.defineExtension("submitjson", {
+        onEvent: function (name, evt) {
+          console.log("Event captured", name, evt);
+          if (name === "htmx:beforeRequest") {
+            console.log("htmx:beforeRequest event triggered");
+
+            let form = evt.target;
+
+            // Dynamically set the hx-post URL based on the active tab
+            let activeTab = document.querySelector(".navbar .active");
+
+            if (activeTab) {
+              let activeTabName = activeTab.innerText.trim();
+              console.log("Active Tab: ", activeTabName);
+
+              if (activeTabName === "student") {
+                form.setAttribute(
+                  "hx-post",
+                  "http://localhost:8080/students/add"
+                );
+              } else if (activeTabName === "school") {
+                form.setAttribute(
+                  "hx-post",
+                  "http://localhost:8080/schools/add"
+                );
+              }
+            }
+
+            // Serialize the form data into JSON
+            const formData = new FormData(form);
+            const jsonData = {};
+
+            formData.forEach((value, key) => {
+              jsonData[key] = value;
+            });
+
+            // Modify the request headers to send JSON
+            evt.detail.headers["Content-Type"] = "application/json";
+            evt.detail.parameters = JSON.stringify(jsonData);
+
+            // Optional: Add custom headers if necessary
+            evt.detail.headers["X-API-Key"] = "sjk_xxx"; // Example custom header
+          }
+        },
+      });
+
+      // htmx.defineExtension("submitjson", {
+      //   onEvent: function (name, evt) {
+      //     console.log("Event captured", name, evt);
+      //     if (name === "htmx:configRequest") {
+      //       // Set the request headers to indicate JSON
+      //       evt.detail.headers["Content-Type"] = "application/json";
+      //       evt.detail.headers["X-API-Key"] = "sjk_xxx"; // Custom header example
+
+      //       // Get active tab type
+      //       let activeTab = document.querySelector(".navbar .active").innerText;
+      //       console.log("Active tab: ", activeTab);
+      //       let form = document.getElementById("addForm");
+
+      //       // Dynamically update the action URL based on active tab
+      //       if (activeTab) {
+      //         form.setAttribute(
+      //           "hx-post",
+      //           activeTab === "student"
+      //             ? "http://localhost:8080/students/add"
+      //             : "http://localhost:8080/schools/add"
+      //         );
+      //       }
+
+      //       // Convert form data to JSON before submitting
+      //       const formData = new FormData(form); // Get form data as FormData
+      //       const jsonData = {}; // Prepare a plain object to hold the form data
+
+      //       formData.forEach((value, key) => {
+      //         jsonData[key] = value; // Add each form field as a key-value pair in the object
+      //       });
+
+      //       // Set the request parameters to be the serialized JSON data
+      //       evt.detail.parameters = JSON.stringify(jsonData);
+      //     }
+      //   },
+      // });
+    </script>
+  </body>
+</html>
